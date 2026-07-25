@@ -28,7 +28,14 @@ export function parseCatalog(value: unknown): CatalogCard[] {
     if (typeof card.rarity !== "string" || !(RARITIES as readonly string[]).includes(card.rarity)) {
       throw new TypeError(`Card ${card.id} has an invalid rarity`);
     }
-    if (card.tradeInRewardId !== undefined && typeof card.tradeInRewardId !== "string") {
+    if (
+      card.tradeInRewardId !== undefined &&
+      (
+        typeof card.tradeInRewardId !== "string" ||
+        card.tradeInRewardId.trim().length === 0 ||
+        !/^[a-z0-9-]+$/.test(card.tradeInRewardId)
+      )
+    ) {
       throw new TypeError(`Card ${card.id} has an invalid tradeInRewardId`);
     }
     return {
@@ -36,7 +43,7 @@ export function parseCatalog(value: unknown): CatalogCard[] {
       name: card.name.trim(),
       rarity: card.rarity as Rarity,
       ...(typeof card.tradeInRewardId === "string"
-        ? { tradeInRewardId: card.tradeInRewardId }
+        ? { tradeInRewardId: card.tradeInRewardId.trim() }
         : {})
     };
   });

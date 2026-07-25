@@ -1,6 +1,7 @@
 export * from "./pack-opening.js";
 export * from "./postgres.js";
 export * from "./catalog.js";
+export * from "./trade-in.js";
 export * from "./viewer-economy.js";
 
 export interface CurrencyLedgerEntry {

@@ -17,6 +17,7 @@
     "test:unit": "npm run test --workspace @cardbot/shared-config && npm run test --workspace @cardbot/economy && npm run test --workspace @cardbot/rarity && npm run test --workspace @cardbot/inventory && npm run test --workspace @cardbot/database && npm run test --workspace @cardbot/queue && npm run test --workspace @cardbot/twitch-bot",
     "db:migrate": "node --env-file-if-exists=.env --import tsx packages/database/src/migrate.ts",
     "db:seed-catalog": "node --env-file-if-exists=.env --import tsx packages/database/src/seed-catalog.ts",
+    "catalog:validate": "node --import tsx packages/database/src/validate-catalog.ts",
     "db:migrate:prod": "node --env-file-if-exists=.env packages/database/dist/migrate.js",
     "db:seed-catalog:prod": "node --env-file-if-exists=.env packages/database/dist/seed-catalog.js",
     "db:prepare:prod": "npm run db:migrate:prod && npm run db:seed-catalog:prod",

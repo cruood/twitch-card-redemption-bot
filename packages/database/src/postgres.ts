@@ -24,6 +24,11 @@ import {
   type PersistPackOpeningInput
 } from "./pack-opening.js";
 import {
+  type PersistTradeInInput,
+  type TradeInTransaction,
+  type TradeInTransactionRunner
+} from "./trade-in.js";
+import {
   type InventorySummaryItem,
   type ViewerEconomyStore,
   type ViewerRecord
@@ -34,7 +39,12 @@ export interface SqlExecutor {
 }
 
 export class PostgresDatabase
-  implements SqlExecutor, PackOpeningTransactionRunner, StreamEconomyStore, ViewerEconomyStore
+  implements
+    SqlExecutor,
+    PackOpeningTransactionRunner,
+    TradeInTransactionRunner,
+    StreamEconomyStore,
+    ViewerEconomyStore
 {
   private readonly pool: Pool;
 
@@ -51,6 +61,12 @@ export class PostgresDatabase
     work: (transaction: PackOpeningTransaction) => Promise<T>
   ): Promise<T> {
     return this.runSqlTransaction((sql) => work(new PostgresPackOpeningTransaction(sql)));
+  }
+
+  async runTradeInTransaction<T>(
+    work: (transaction: TradeInTransaction) => Promise<T>
+  ): Promise<T> {
+    return this.runSqlTransaction((sql) => work(new PostgresTradeInTransaction(sql)));
   }
 
   async withAdvisoryLock<T>(
@@ -578,6 +594,86 @@ class PostgresPackOpeningTransaction implements PackOpeningTransaction {
       [input.budget.legendaryAvailable, input.budget.mythicalAvailable, input.openedAt]
     );
     return openingId;
+  }
+}
+
+class PostgresTradeInTransaction implements TradeInTransaction {
+  constructor(private readonly sql: SqlExecutor) {}
+
+  async lockUser(userId: string): Promise<boolean> {
+    const rows = await this.sql.query<{ id: string }>(
+      "SELECT id FROM users WHERE id = $1 FOR UPDATE",
+      [userId]
+    );
+    return rows.length === 1;
+  }
+
+  async hasProcessedSourceEvent(sourceEventId: string): Promise<boolean> {
+    const [row] = await this.sql.query<{ exists: boolean }>(
+      "SELECT EXISTS (SELECT 1 FROM trade_ins WHERE source_event_id = $1) AS exists",
+      [sourceEventId]
+    );
+    return row?.exists ?? false;
+  }
+
+  async getAvailableTradeInCard(userId: string, cardId: string) {
+    const [row] = await this.sql.query<{
+      inventory_id: string;
+      trade_in_reward_id: string | null;
+    }>(
+      `SELECT i.id AS inventory_id, c.trade_in_reward_id
+       FROM inventory i
+       JOIN card_definitions c ON c.id = i.card_id
+       WHERE i.user_id = $1
+         AND i.card_id = $2
+         AND i.consumed_at IS NULL
+       ORDER BY i.acquired_at, i.id
+       LIMIT 1
+       FOR UPDATE OF i`,
+      [userId, cardId]
+    );
+    return row
+      ? { inventoryId: row.inventory_id, rewardId: row.trade_in_reward_id }
+      : null;
+  }
+
+  async isProtectedTarget(twitchUserId: string): Promise<boolean> {
+    const [row] = await this.sql.query<{ exists: boolean }>(
+      "SELECT EXISTS (SELECT 1 FROM protected_targets WHERE twitch_user_id = $1) AS exists",
+      [twitchUserId]
+    );
+    return row?.exists ?? false;
+  }
+
+  async recordTradeIn(input: PersistTradeInInput): Promise<string> {
+    const consumed = await this.sql.query<{ id: string }>(
+      `UPDATE inventory
+       SET consumed_at = $2
+       WHERE id = $1 AND user_id = $3 AND consumed_at IS NULL
+       RETURNING id`,
+      [input.inventoryId, input.requestedAt, input.userId]
+    );
+    if (consumed.length !== 1) {
+      throw new Error("Trade-in inventory item is no longer available");
+    }
+
+    const id = randomUUID();
+    await this.sql.query(
+      `INSERT INTO trade_ins
+         (id, user_id, inventory_id, target_twitch_user_id, reward_id, status,
+          source_event_id, created_at)
+       VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7)`,
+      [
+        id,
+        input.userId,
+        input.inventoryId,
+        input.targetTwitchUserId,
+        input.rewardId,
+        input.sourceEventId ?? null,
+        input.requestedAt
+      ]
+    );
+    return id;
   }
 }
 

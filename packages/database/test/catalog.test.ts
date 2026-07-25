@@ -20,3 +20,22 @@ test("catalog validation rejects duplicate IDs and missing rarity coverage", () 
     /must include at least one uncommon/
   );
 });
+
+test("catalog validation accepts safe reward IDs and rejects unsafe values", () => {
+  const base = [
+    { id: "one", name: "One", rarity: "common" },
+    { id: "two", name: "Two", rarity: "uncommon" },
+    { id: "three", name: "Three", rarity: "rare" },
+    { id: "four", name: "Four", rarity: "epic" },
+    { id: "five", name: "Five", rarity: "legendary" },
+    { id: "six", name: "Six", rarity: "mythical", tradeInRewardId: "timeout-10m" }
+  ];
+
+  assert.equal(parseCatalog(base)[5]?.tradeInRewardId, "timeout-10m");
+  assert.throws(
+    () => parseCatalog(base.map((card) => (
+      card.id === "six" ? { ...card, tradeInRewardId: "Timeout 10m" } : card
+    ))),
+    /invalid tradeInRewardId/
+  );
+});

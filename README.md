@@ -55,6 +55,9 @@ npm run twitch:eventsub
 PostgreSQL and Redis must be running before the migration, worker, or EventSub process
 starts. The seed command is repeatable: it updates cards from `catalog/cards.json` and
 marks cards omitted from that file inactive without deleting inventory history.
+Run `npm run catalog:validate` to check the repository catalog without a database, or
+pass a replacement JSON path after `--`. The complete field contract is documented in
+`catalog/README.md`.
 
 Run the deterministic rarity simulation (defaults to 100 runs of 120 daily streams):
 
@@ -94,6 +97,13 @@ persist a last-confirmed-live heartbeat. If an offline notification is missed, r
 closes the stale stream at that heartbeat instead of awarding currency for unverified
 downtime. Starting the bot during an already-live stream creates or recovers its scheduler.
 Processed EventSub counter IDs are retained for seven days and pruned at stream start.
+
+The trade-in domain boundary can create audited `pending` requests without executing a
+Twitch action. A request locks the owner, selects one unconsumed inventory item, derives
+the reward from that card's catalog definition, enforces broadcaster and manual target
+protection, consumes the inventory item, and records the request in one transaction.
+Source EventSub IDs make retries idempotent. No chat command or Helix moderation gateway
+is connected to this flow until reward pricing and vote policy are approved.
 
 ## Twitch Commands
 
@@ -214,7 +224,7 @@ alternatively, deploy each service with the Railway CLI.
 5. Add Twitch balance, inventory, and pack-opening commands with durable EventSub idempotency. (Complete)
 6. Verify PostgreSQL, Redis, EventSub, and Helix chat together against a test Twitch channel. (Complete)
 7. Add Discord companion commands after selecting a Twitch-to-Discord account-linking flow.
-8. Wire Helix actions behind moderation interfaces with dry-run mode, audit logs, broadcaster protection rules, and approved reward pricing.
+8. Approve reward pricing and vote policy, then wire the existing audited trade-in requests to dry-run moderation commands.
 9. Enable low-risk trade-ins first, then gated vote-based moderation redeems after simulation and operator review.
 
 ## Trade-In Reward Direction
@@ -229,7 +239,7 @@ The highest-impact rewards should map to the highest rarity and cost tiers:
 
 ## Current Status
 
-The economy beta path is implemented and covered by 51 unit/contract tests plus two
+The economy beta path is implemented and covered by 52 unit/contract tests plus two
 real-service integration tests: per-stream opt-in, passive accrual, attendance and
 engagement signals, controlled rarity budgets, atomic and concurrency-safe pack purchases,
 card inventory, Twitch chat commands, EventSub redelivery protection, automatic OAuth
@@ -241,9 +251,8 @@ per-stream opt-in, an atomic pack purchase, inventory lookup, ten-minute passive
 final stream accrual, and BullMQ scheduler removal. The persisted opening audit included
 its source event, participation snapshot, boost, raw rarity roll, and budget state.
 
-The production host and rotated OAuth strategy are now selected and implemented for
-Railway. Remaining launch inputs are replacing the starter catalog in `catalog/cards.json`,
-creating/linking the Railway project, and deciding whether the production broadcaster and
-bot use separate Twitch accounts. Discord work requires an account-linking decision.
-Moderation work requires approved reward costs, vote thresholds and durations, and veto
-behavior before any dangerous Helix action is enabled.
+The production host, GitHub repository, separate bot account, and rotated OAuth strategy
+are selected and implemented. Remaining launch inputs are replacing the starter catalog
+in `catalog/cards.json` and approving its trade-in reward mappings. Discord work requires
+an account-linking decision. Moderation work requires approved reward costs, vote
+thresholds and durations, and veto behavior before any dangerous Helix action is enabled.
