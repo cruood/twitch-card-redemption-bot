@@ -1,0 +1,38 @@
+{
+  "name": "twitch-card-redemption-bot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.11"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace @cardbot/shared-config && npm run build --workspace @cardbot/economy && npm run build --workspace @cardbot/rarity && npm run build --workspace @cardbot/inventory && npm run build --workspace @cardbot/database && npm run build --workspace @cardbot/queue && npm run build --workspace @cardbot/twitch-bot && npm run build --workspace @cardbot/discord-bot",
+    "test": "npm run build && npm run test:unit",
+    "test:integration": "node --env-file-if-exists=.env --import tsx --test test/integration/*.test.ts",
+    "test:unit": "npm run test --workspace @cardbot/shared-config && npm run test --workspace @cardbot/economy && npm run test --workspace @cardbot/rarity && npm run test --workspace @cardbot/inventory && npm run test --workspace @cardbot/database && npm run test --workspace @cardbot/queue && npm run test --workspace @cardbot/twitch-bot",
+    "db:migrate": "node --env-file-if-exists=.env --import tsx packages/database/src/migrate.ts",
+    "db:seed-catalog": "node --env-file-if-exists=.env --import tsx packages/database/src/seed-catalog.ts",
+    "db:migrate:prod": "node --env-file-if-exists=.env packages/database/dist/migrate.js",
+    "db:seed-catalog:prod": "node --env-file-if-exists=.env packages/database/dist/seed-catalog.js",
+    "db:prepare:prod": "npm run db:migrate:prod && npm run db:seed-catalog:prod",
+    "worker:economy": "node --env-file-if-exists=.env --import tsx apps/twitch-bot/src/economy-worker.ts",
+    "twitch:eventsub": "node --env-file-if-exists=.env --import tsx apps/twitch-bot/src/eventsub-runner.ts",
+    "start:economy-worker": "node --env-file-if-exists=.env apps/twitch-bot/dist/economy-worker.js",
+    "start:twitch-eventsub": "node --env-file-if-exists=.env apps/twitch-bot/dist/eventsub-runner.js",
+    "twitch:rotate-tokens": "node --env-file-if-exists=.env --import tsx apps/twitch-bot/src/rotate-tokens.ts",
+    "doctor": "node --env-file-if-exists=.env --import tsx apps/twitch-bot/src/doctor.ts",
+    "simulate:rarity": "npm run simulate --workspace @cardbot/rarity --"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/pg": "^8.15.0",
+    "@types/ws": "^8.18.1",
+    "tsx": "^4.20.0",
+    "typescript": "^5.8.0"
+  }
+}

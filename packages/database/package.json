@@ -1,0 +1,20 @@
+{
+  "name": "@cardbot/database",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "tsx --test test/*.test.ts",
+    "migrate": "tsx src/migrate.ts",
+    "seed:catalog": "tsx src/seed-catalog.ts"
+  },
+  "dependencies": {
+    "@cardbot/economy": "0.1.0",
+    "@cardbot/inventory": "0.1.0",
+    "@cardbot/rarity": "0.1.0",
+    "pg": "^8.16.0"
+  }
+}

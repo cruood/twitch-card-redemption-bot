@@ -1,0 +1,22 @@
+{
+  "name": "@cardbot/twitch-bot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "tsx --test test/*.test.ts",
+    "worker:economy": "tsx src/economy-worker.ts",
+    "eventsub": "tsx src/eventsub-runner.ts"
+  },
+  "dependencies": {
+    "@cardbot/database": "0.1.0",
+    "@cardbot/economy": "0.1.0",
+    "@cardbot/inventory": "0.1.0",
+    "@cardbot/queue": "0.1.0",
+    "@cardbot/rarity": "0.1.0",
+    "@cardbot/shared-config": "0.1.0",
+    "ws": "^8.21.1"
+  }
+}

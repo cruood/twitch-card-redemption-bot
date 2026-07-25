@@ -1,0 +1,11 @@
+[build]
+buildCommand = "npm run build"
+
+[deploy]
+preDeployCommand = ["npm run db:migrate:prod"]
+startCommand = "npm run start:economy-worker"
+healthcheckPath = "/healthz"
+healthcheckTimeout = 30
+restartPolicyType = "ALWAYS"
+overlapSeconds = 15
+drainingSeconds = 30

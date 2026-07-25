@@ -1,0 +1,12 @@
+[
+  { "id": "common-hydrate", "name": "Hydrate", "rarity": "common" },
+  { "id": "common-stretch", "name": "Stretch Break", "rarity": "common" },
+  { "id": "common-good-vibes", "name": "Good Vibes", "rarity": "common" },
+  { "id": "uncommon-sound-check", "name": "Sound Check", "rarity": "uncommon" },
+  { "id": "uncommon-clip-keeper", "name": "Clip Keeper", "rarity": "uncommon" },
+  { "id": "rare-spotlight", "name": "Spotlight", "rarity": "rare" },
+  { "id": "rare-chat-captain", "name": "Chat Captain", "rarity": "rare" },
+  { "id": "epic-golden-moment", "name": "Golden Moment", "rarity": "epic" },
+  { "id": "legendary-stream-crown", "name": "Crown of the Stream", "rarity": "legendary" },
+  { "id": "mythical-broadcast", "name": "Mythic Broadcast", "rarity": "mythical" }
+]
